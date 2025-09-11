@@ -1,8 +1,8 @@
 package com.crediya.r2dbc;
 
-import com.crediya.model.applicant.Applicant;
-import com.crediya.model.applicant.gateways.ApplicantRepository;
-import com.crediya.r2dbc.data.ApplicantData;
+import com.crediya.model.User.User;
+import com.crediya.model.User.gateways.UserRepository;
+import com.crediya.r2dbc.data.UserData;
 import com.crediya.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
 import org.slf4j.Logger;
@@ -12,36 +12,36 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public class MyReactiveRepositoryAdapter extends ReactiveAdapterOperations<
-        Applicant,
-        ApplicantData,
+        User,
+        UserData,
         String,
         MyReactiveRepository
-> implements ApplicantRepository {
+> implements UserRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MyReactiveRepositoryAdapter.class);
 
     public MyReactiveRepositoryAdapter(MyReactiveRepository repository, ObjectMapper mapper) {
-        super(repository, mapper, d -> mapper.map(d, Applicant.class/* change for domain model */));
+        super(repository, mapper, d -> mapper.map(d, User.class/* change for domain model */));
     }
 
     @Override
-    public Mono<Applicant> saveApplicant(Applicant applicant) {
-        LOGGER.debug("Entering to saveApplicant method - applicant: {}", applicant);
-        return repository.save(mapper.map(applicant, ApplicantData.class))
-                .map(data -> mapper.map(data, Applicant.class));
+    public Mono<User> saveUser(User User) {
+        LOGGER.debug("Entering to saveUser method - User: {}", User);
+        return repository.save(mapper.map(User, UserData.class))
+                .map(data -> mapper.map(data, User.class));
     }
 
     @Override
-    public Mono<Applicant> findByEmail(String email) {
+    public Mono<User> findByEmail(String email) {
         LOGGER.debug("Entering to findByEmail method - email: {}" , email);
         return repository.findByEmail(email)
-                .map(data->mapper.map(data, Applicant.class));
+                .map(data->mapper.map(data, User.class));
     }
 
     @Override
-    public Mono<Applicant> findByIdentityDocument(String identityDocument) {
+    public Mono<User> findByIdentityDocument(String identityDocument) {
         LOGGER.debug("Entering to findByIdentityDocument method - identityDocument: {}", identityDocument);
         return repository.findByIdentityDocument(identityDocument)
-                .map(data -> mapper.map(data, Applicant.class));
+                .map(data -> mapper.map(data, User.class));
     }
 }

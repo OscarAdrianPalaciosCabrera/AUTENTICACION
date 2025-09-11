@@ -13,7 +13,9 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
+jwt:
+  secret: 1ADDFHEUKQ718327ajdhdj28aueyrhdf74k
+  expiration: 600000
 management:
   endpoints:
     web:

@@ -1,10 +1,9 @@
-package com.crediya.model.applicant;
+package com.crediya.model.User;
 import lombok.Builder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,9 +14,9 @@ import java.util.logging.Logger;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class Applicant {
+public class User {
 
-    private static final Logger LOGGER = Logger.getLogger(Applicant.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(User.class.getName());
 
     private String name;
     private String lastName;
@@ -27,10 +26,14 @@ public class Applicant {
     private String phoneNumber;
     private String email;
     private BigDecimal baseSalary;
+    private Integer role;
+    private String passwordHash;
 
-    public static Applicant create(String name, String lastName,String identityDocument, LocalDate birthDate, String address, String phoneNumber, String email, BigDecimal baseSalary) {
+
+
+    public static User create(String name, String lastName,String identityDocument, LocalDate birthDate, String address, String phoneNumber, String email, BigDecimal baseSalary, Integer role, String passwordHash) {
         LOGGER.info("Entering to create applicant method in model class");
-        return new Applicant(name, lastName, identityDocument,birthDate, address, phoneNumber, email, baseSalary);
+        return new User(name, lastName, identityDocument,birthDate, address, phoneNumber, email, baseSalary, role, passwordHash);
     }
 
     public boolean isSalaryValid(){

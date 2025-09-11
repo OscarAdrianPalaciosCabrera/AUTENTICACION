@@ -19,8 +19,9 @@ public class RouterRest {
     @Bean
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
         LOGGER.debug("Entering to routerFunction - handler: {}", handler);
-        return route(POST("/api/v1/usuarios"), handler::listenPOSTRegisterApplicant)
-                .andRoute(POST("api/v1/usuarios/existingByIdentityDocument"), handler::listenGETApplicant);
+        return route(POST("/api/v1/usuarios"), handler::listenPOSTRegisterUser)
+                .andRoute(POST("/api/v1/usuarios/existingByIdentityDocument"), handler::listenGETUser)
+                .andRoute(POST("/api/v1/login"), handler::listenPOSTLogin);
 
     }
 }

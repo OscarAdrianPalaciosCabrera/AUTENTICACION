@@ -1,11 +1,11 @@
 package com.crediya.api;
-import com.crediya.api.dto.ApplicantResponseDTO;
-import com.crediya.api.dto.CreateApplicantDTO;
-import com.crediya.api.mapper.ApplicantDtoMapper;
-import com.crediya.model.applicant.Applicant;
-import com.crediya.usecase.registerapplicant.RegisterApplicantUseCase;
-import com.crediya.usecase.registerapplicant.ValidationsApplicantUseCase;
-import com.crediya.usecase.registerapplicant.exceptions.BusinessExceptions;
+import com.crediya.api.dto.*;
+import com.crediya.api.mapper.UserDtoMapper;
+import com.crediya.model.User.User;
+import com.crediya.usecase.authentication.AuthenticationUseCase;
+import com.crediya.usecase.registeruser.RegisterUserUseCase;
+import com.crediya.usecase.registeruser.ValidationsUserUseCase;
+import com.crediya.usecase.registeruser.exceptions.BusinessExceptions;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -14,69 +14,129 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import org.springframework.web.server.ServerWebInputException;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+
 import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
 public class Handler {
 
-    private final RegisterApplicantUseCase registerApplicantUseCase;
-    private final ValidationsApplicantUseCase validationsApplicantUseCase;
-    private final ApplicantDtoMapper mapper;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Handler.class);
+
+    private final RegisterUserUseCase registerUserUseCase;
+    private final ValidationsUserUseCase validationsUserUseCase;
+    private final UserDtoMapper mapper;
+    private final AuthenticationUseCase authenticationUseCase;
     private final Validator validator;
     private final GlobalExceptionHandler exceptionHandler;
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterApplicantUseCase.class);
 
 
-    public Mono<ServerResponse> listenPOSTRegisterApplicant(ServerRequest request) {
-        LOGGER.debug("Entering to listenPOSTRegisterApplicant - request: {}", request);
-        return request.bodyToMono(CreateApplicantDTO.class)
+
+    public Mono<ServerResponse> listenPOSTRegisterUser(ServerRequest request) {
+        LOGGER.debug("Entering to listenPOSTRegisterUser - request: {}", request);
+
+        return ReactiveSecurityContextHolder.getContext()
+                .flatMap(ctx -> {
+                    Authentication auth = ctx.getAuthentication();
+
+                    // Validar que el usuario tenga el rol ADMIN o ADVISOR
+                    boolean hasRole = auth.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRATOR") || a.getAuthority().equals("ROLE_ADVISOR"));
+
+                    if (!hasRole) {
+                        LOGGER.warn("User {} attempted to access register endpoint without proper role", auth.getName());
+                        return ServerResponse.status(HttpStatus.FORBIDDEN)
+                                .bodyValue("Access denied: insufficient role");
+                    }
+
+                    // Lógica de registro de usuario
+                    return request.bodyToMono(CreateUserDTO.class)
+                            .flatMap(dto -> {
+                                Set<ConstraintViolation<CreateUserDTO>> violations = validator.validate(dto);
+                                if (!violations.isEmpty()) {
+                                    LOGGER.warn("Validation error in CreateUserDTO");
+                                    return Mono.error(new ConstraintViolationException(violations));
+                                }
+
+                                User user = mapper.toModel(dto);
+                                LOGGER.info("CreateUserDTO was mapped to Model: User");
+                                return registerUserUseCase.saveUser(user);
+                            })
+                            .flatMap(saved -> ServerResponse.status(HttpStatus.CREATED)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(saved))
+                            .onErrorResume(ConstraintViolationException.class, exceptionHandler::handleConstraintViolation)
+                            .onErrorResume(ServerWebInputException.class, exceptionHandler::handleDeserializationException)
+                            .onErrorResume(BusinessExceptions.class, exceptionHandler::handleBusinessException)
+                            .onErrorResume(Throwable.class, exceptionHandler::handleGenericException);
+                });
+    }
+
+    public Mono<ServerResponse> listenGETUser(ServerRequest request) {
+        LOGGER.debug("Entering to listenGETUser - request: {}", request);
+        return request.bodyToMono(UserDTO.class)
                 .flatMap(dto -> {
-                    Set<ConstraintViolation<CreateApplicantDTO>> violations = validator.validate(dto);
+                    String identityDocument = dto.identityDocumentApplicant();
+                    LOGGER.info("identityDocument: " + identityDocument);
+                    return validationsUserUseCase.findByIdentityDocument(identityDocument)
+                            .flatMap( user -> {
+                                LOGGER.info("Entro");
+                                UserResponseDTO responseDTO = new UserResponseDTO(user.getName(),
+                                        user.getEmail(),
+                                        user.getIdentityDocument(),
+                                        user.getRole());
+                                LOGGER.info(" listenGETUser - UserResponseDTO was mapped from Model: User - dto: {}", responseDTO);
+                                return ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(responseDTO);
+                            })
+                            .switchIfEmpty(
+                                    Mono.error(new BusinessExceptions("User with identity document " + identityDocument + " not found")));
+                })
+                .onErrorResume(ConstraintViolationException.class, exceptionHandler::handleConstraintViolation)
+                .onErrorResume(ServerWebInputException.class, exceptionHandler::handleDeserializationException)
+                .onErrorResume(BusinessExceptions.class, exceptionHandler::handleBusinessException)
+                .onErrorResume(Throwable.class, exceptionHandler::handleGenericException);
+                /*.onErrorResume(e ->ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .bodyValue("Error"+ e.getMessage()));*/
+
+
+    }
+    public Mono<ServerResponse> listenPOSTLogin(ServerRequest request) {
+        LOGGER.debug("Entering to listenPOSTLogin - serverRequest: {}", request);
+
+        return request.bodyToMono(LoginRequestDTO.class)
+                .flatMap(dto -> {
+                    Set<ConstraintViolation<LoginRequestDTO>> violations = validator.validate(dto);
                     if (!violations.isEmpty()) {
-                        LOGGER.warn("An error will be produced because some field in the CreateApplicantDTO is bad");
+                        LOGGER.warn("Validation error in LoginRequestDto");
                         return Mono.error(new ConstraintViolationException(violations));
                     }
-                    Applicant applicant = mapper.toModel(dto);
-                    LOGGER.info(" listenPOSTRegisterApplicant - CreateApplicantDTO was mapped to Model: applicant");
-                    return registerApplicantUseCase.saveApplicant(applicant);
+                    LOGGER.info("listenPOSTLogin - Valid LoginRequestDto received for user: {}", dto.email());
+                    return authenticationUseCase.authenticate(dto.email(), dto.password())
+                            .map(authResult -> new LoginResponseDTO(
+                                    authResult.getToken(),
+                                    "Bearer",
+                                    3600L,
+                                    authResult.getEmail(),
+                                    authResult.getRole()
+                            ));
                 })
-                .flatMap(saved -> ServerResponse.status(HttpStatus.CREATED)
+                .flatMap(response -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(saved))
+                        .bodyValue(response))
                 .onErrorResume(ConstraintViolationException.class, exceptionHandler::handleConstraintViolation)
                 .onErrorResume(ServerWebInputException.class, exceptionHandler::handleDeserializationException)
                 .onErrorResume(BusinessExceptions.class, exceptionHandler::handleBusinessException)
                 .onErrorResume(Throwable.class, exceptionHandler::handleGenericException);
     }
-    public Mono<ServerResponse> listenGETApplicant(ServerRequest request) {
-        LOGGER.debug("Entering to listenGETApplicant - request: {}", request);
-        return request.bodyToMono(CreateApplicantDTO.class)
-                .flatMap(dto -> {
-                    // Mapear DTO a entidad de dominio
-                    Applicant applicant = mapper.toModel(dto);
-                    LOGGER.info(" listenGETApplicant - CreateApplicantDTO was mapped to Model: applicant");
-                    return validationsApplicantUseCase.existingByIdentityDocument(applicant);
-                })
-                .flatMap( applicant -> {
-                    ApplicantResponseDTO responseDTO = new ApplicantResponseDTO(
-                        applicant.getIdentityDocument(),
-                        applicant.getName());
-                    LOGGER.info(" listenGETApplicant - ApplicantResponseDTO was mapped from Model: applicant");
-                    return ServerResponse.ok()
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(responseDTO);
 
-                })
-                .onErrorResume(e ->ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .bodyValue("Error"+ e.getMessage()));
-
-
-    }
 }
 

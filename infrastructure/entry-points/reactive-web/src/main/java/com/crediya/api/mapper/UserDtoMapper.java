@@ -1,22 +1,20 @@
 package com.crediya.api.mapper;
 
-import com.crediya.api.dto.ApplicantDTO;
-import com.crediya.api.dto.CreateApplicantDTO;
-import com.crediya.model.applicant.Applicant;
+import com.crediya.api.dto.LoginResponseDTO;
+import com.crediya.api.dto.UserDTO;
+import com.crediya.api.dto.CreateUserDTO;
+import com.crediya.model.User.User;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
 import org.mapstruct.ObjectFactory;
-import org.springframework.context.annotation.EnableMBeanExport;
-import reactor.core.publisher.Mono;
+
 
 @Mapper(componentModel = "spring")
-public interface ApplicantDtoMapper {
+public interface UserDtoMapper {
     @ObjectFactory
-    default Applicant toModel(CreateApplicantDTO dto) {
+    default User toModel(CreateUserDTO dto) {
 
         if (dto == null) return null;
-        return Applicant.create(
+        return User.create(
                 dto.name(),
                 dto.lastName(),
                 dto.identityDocument(),
@@ -24,10 +22,12 @@ public interface ApplicantDtoMapper {
                 dto.address(),
                 dto.phoneNumber(),
                 dto.email(),
-                dto.baseSalary()
+                dto.baseSalary(),
+                dto.role(),
+                dto.passwordHash()
         );
     }
-    ApplicantDTO toResponse(Applicant applicant);
+    UserDTO toResponse(User user);
 
     /*@Mappings({
             //@Mapping(target= "name", source="name"),
@@ -38,11 +38,10 @@ public interface ApplicantDtoMapper {
             //@Mapping(target= "email", source="email"),
             //@Mapping(target= "baseSalary", source="baseSalary"),
     })*/
-    //Applicant toModel(CreateApplicantDTO createApplicantDTO);
+    //User toModel(CreateUserDTO createUserDTO);
 
 
 }
 
 
-   //
-
+//

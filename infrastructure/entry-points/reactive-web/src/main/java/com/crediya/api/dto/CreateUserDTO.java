@@ -7,7 +7,7 @@ import jakarta.validation.constraints.*;
 import org.springframework.format.annotation.NumberFormat;
 
 
-public record CreateApplicantDTO(
+public record CreateUserDTO(
         @NotBlank(message = "Some mandatory field can not be blank")
         @NotNull(message = "Some mandatory field can not be null")
         String name,
@@ -36,6 +36,15 @@ public record CreateApplicantDTO(
         /*@Pattern(
                 regexp = "^\\d+(\\.\\d{1,2})?$",
                 message = "Solo numeros, hasta dos decimales")*/
-                BigDecimal baseSalary) {
+                BigDecimal baseSalary,
+
+        @NotNull(message = "Some mandatory field can not be null")
+        Integer role,
+
+        @NotBlank(message = "Some mandatory field can not be blank")
+        @NotNull(message = "Some mandatory field can not be null")
+        String passwordHash
+        )
+{
 
 }

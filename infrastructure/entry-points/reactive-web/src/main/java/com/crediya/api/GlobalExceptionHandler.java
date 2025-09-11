@@ -1,8 +1,7 @@
 package com.crediya.api;
 
-import com.crediya.usecase.registerapplicant.exceptions.BusinessExceptions;
+import com.crediya.usecase.registeruser.exceptions.BusinessExceptions;
 import jakarta.validation.ConstraintViolationException;
-import org.apache.logging.log4j.message.Message;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -54,6 +53,17 @@ public class GlobalExceptionHandler{
                         "timestamp", LocalDateTime.now()
                 ));
     }
+
+    /*public Mono<ServerResponse> handleBusinessNotFoundException(BusinessExceptions ex) {
+        return ServerResponse.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "error", ex.getMessage(),
+                        "status", 404,
+                        "timestamp", LocalDateTime.now()
+                ));
+    }
+    */
 
     public Mono<ServerResponse> handleGenericException(Throwable ex) {
         return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
