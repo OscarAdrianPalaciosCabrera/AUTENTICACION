@@ -1,0 +1,17 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: "Authentication-ms"
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://db_auth:5432/auth}
+    username: auth_user
+    password: auth_pass
+    pool:
+      initial-size: 0
+      max-size: 10
+      max-idle-time: 30s
+jwt:
+  secret: 1ADDFHEUKQ718327ajdhdj28aueyrhdf74k
+  expiration: 3600000
+

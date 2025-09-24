@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  db-auth:
+    image: postgres:17
+    container_name: db_auth
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./init-scripts/auth.sql:/docker-entrypoint-initdb.d/auth.sql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-requests:
+    image: postgres:17
+    container_name: db_requests
+    environment:
+      POSTGRES_USER: req_user
+      POSTGRES_PASSWORD: req_pass
+      POSTGRES_DB: requests
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./init-scripts/requests.sql:/docker-entrypoint-initdb.d/requests.sql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U req_user -d requests"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  autenticacion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autenticacion
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_R2DBC_URL=r2dbc:postgresql://db-auth:5432/auth
+      - SPRING_R2DBC_USERNAME=auth_user
+      - SPRING_R2DBC_PASSWORD=auth_pass
+    depends_on:
+      db-auth:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+
+  requests:
+    build:
+      context: C:\Users\Oscar Adrian\Documents\powerUpPragma\Requests-ms
+      dockerfile: Dockerfile
+    container_name: requests
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_R2DBC_URL=r2dbc:postgresql://db-requests:5432/requests
+      - SPRING_R2DBC_USERNAME=req_user
+      - SPRING_R2DBC_PASSWORD=req_pass
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=us-east-1
+
+
+    depends_on:
+      db-requests:
+        condition: service_healthy
+      autenticacion:
+        condition: service_started
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db_auth: 
+  db_requests:
+

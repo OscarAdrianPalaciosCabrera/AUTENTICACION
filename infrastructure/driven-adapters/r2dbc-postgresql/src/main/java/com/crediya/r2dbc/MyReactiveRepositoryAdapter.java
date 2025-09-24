@@ -27,7 +27,7 @@ public class MyReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     @Override
     public Mono<User> saveUser(User User) {
         LOGGER.debug("Entering to saveUser method - User: {}", User);
-        return repository.save(mapper.map(User, UserData.class))
+        return save(User)
                 .map(data -> mapper.map(data, User.class));
     }
 

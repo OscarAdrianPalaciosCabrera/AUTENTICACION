@@ -91,7 +91,8 @@ public class Handler {
                                 UserResponseDTO responseDTO = new UserResponseDTO(user.getName(),
                                         user.getEmail(),
                                         user.getIdentityDocument(),
-                                        user.getRole());
+                                        user.getRole(),
+                                        user.getBaseSalary());
                                 LOGGER.info(" listenGETUser - UserResponseDTO was mapped from Model: User - dto: {}", responseDTO);
                                 return ServerResponse.ok()
                                         .contentType(MediaType.APPLICATION_JSON)

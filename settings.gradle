@@ -3,6 +3,8 @@ pluginManagement {
         //mavenLocal()
         //maven { url = '...' }
         gradlePluginPortal()
+        mavenCentral()
+        maven { url 'https://plugins.gradle.org/m2/' }
     }
 }
 

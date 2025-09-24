@@ -23,7 +23,7 @@ public class SecurityBeansConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/v1/login").permitAll()
-                        .pathMatchers("/api/v1/usuarios/existingByIdentityDocument").permitAll()
+                        .pathMatchers("/api/v1/usuarios/existingByIdentityDocument").hasAnyRole("ADMINISTRATOR","ADVISOR","APPLICANT")
                         .pathMatchers("/api/v1/usuarios").hasAnyRole("ADMINISTRATOR", "ADVISOR")
                         .anyExchange().authenticated()
                 )
