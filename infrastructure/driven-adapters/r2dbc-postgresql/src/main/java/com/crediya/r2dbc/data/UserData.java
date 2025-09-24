@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Data
 @Table("applicants")
-public class ApplicantData {
+public class UserData {
     @Id
     private String id;
     private String name;
@@ -26,4 +26,6 @@ public class ApplicantData {
     private String phoneNumber;
     private String email;
     private BigDecimal baseSalary;
+    private Integer role;
+    private String passwordHash;
 }

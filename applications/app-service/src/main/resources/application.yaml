@@ -1,6 +1,5 @@
 server:
   port: 8080
-
 spring:
   application:
     name: "Authentication-ms"
@@ -8,12 +7,9 @@ spring:
     url: r2dbc:postgresql://localhost:5432/crediya
     username: postgres
     password: admin
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
+jwt:
+  secret: 1ADDFHEUKQ718327ajdhdj28aueyrhdf74k
+  expiration: 3600000
 management:
   endpoints:
     web:
@@ -26,6 +22,7 @@ management:
 
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
+
 
 
 

@@ -1,4 +1,4 @@
-package com.crediya.usecase.registerapplicant.exceptions;
+package com.crediya.usecase.registeruser.exceptions;
 
 import java.util.logging.Logger;
 
